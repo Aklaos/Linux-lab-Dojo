@@ -19,16 +19,25 @@ command -v podman >/dev/null || { echo "Il faut Podman."; exit 1; }
 podman image exists "$IMAGE" || podman build -q -t "$IMAGE" containers/debian-server
 
 # Tout est détruit à la sortie, quoi qu'il arrive.
-trap 'podman rm -f -t 0 "$NAME" >/dev/null 2>&1 || true' EXIT
-podman rm -f -t 0 "$NAME" >/dev/null 2>&1 || true
+VOL="${NAME}-data"
+cleanup() {
+  podman rm -f -t 0 "$NAME" >/dev/null 2>&1 || true
+  podman volume rm -f "$VOL" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+cleanup
 
-# Aucun volume de l'hôte, aucun réseau, peu de droits, ressources bornées.
+# Disque du lab : volume tmpfs rootless (en mémoire, rien de l'hôte), options réglables par lab.
+podman volume create --driver local --opt type=tmpfs --opt device=tmpfs \
+  --opt "o=${OPTS},mode=755,nosuid,nodev,noexec" "$VOL" >/dev/null
+
+# Aucun dossier de l'hôte, aucun réseau, peu de droits, ressources bornées.
 podman run -d --name "$NAME" --hostname srv-prod-01 \
   --systemd=always --network=none \
   --cap-drop=MKNOD --cap-drop=NET_RAW --cap-drop=SETFCAP --cap-drop=AUDIT_WRITE \
   --security-opt no-new-privileges \
   --pids-limit 256 --memory 512m --memory-swap 512m --cpus 1 \
-  --tmpfs "/opt/lab-${NUM}/data:rw,${OPTS},mode=755,nosuid,nodev,noexec" \
+  -v "${VOL}:/opt/lab-${NUM}/data" \
   "$IMAGE" >/dev/null
 
 # Attendre le démarrage de systemd (l'état « degraded » est sans importance).

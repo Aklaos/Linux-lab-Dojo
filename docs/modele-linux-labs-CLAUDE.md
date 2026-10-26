@@ -63,7 +63,7 @@ Les scripts sont publics et lancés en `root` dans un conteneur jetable : ils do
 4. **Lancement.** Donner la commande `./scripts/lab-run.sh NNN-theme` (en local, aucune VM, aucun clone, aucun volume de l'hôte). Elle ouvre un shell sur un serveur Debian jetable. Pas de commit nécessaire avant de jouer.
 5. **Chrono.** Dès qu'il confirme que le script est lancé et le lab prêt, démarrer le chrono de **10 minutes** : lancer en tâche de fond `sleep 600` (Bash avec `run_in_background`), qui te réveille à la fin. Annoncer l'heure de début. S'il demande le temps restant, le calculer. À la fin : **« Time's up »**, lui demander de poser le clavier.
 6. **Débrief.** Voir la posture. Il peut dépasser le temps s'il veut finir, mais le débrief commence quand il le décide.
-7. **Fin.** Il tape `exit` : le conteneur est détruit. Écrire `debrief.md` (générique, sans rien sur l'utilisateur), mettre à jour `labs/INDEX.md`. Donner `./scripts/publish-lab.sh NNN-theme` (commit de `labs/`, push, PR passée en « prête »), puis la fusion par lui (`gh pr merge --merge --delete-branch`, qui ferme aussi le ticket). Un lab = un ticket = une branche = une PR. L'outillage du repo (scripts, containers, README, CLAUDE.md) est sur une autre branche : ne jamais mélanger.
+7. **Fin.** Il tape `exit` : le conteneur est détruit. Écrire `debrief.md` (générique, sans rien sur l'utilisateur), mettre à jour `labs/INDEX.md`. Donner `./scripts/publish-lab.sh NNN-theme` (commit de `labs/`, push, PR passée en « prête »), puis la fusion par lui (`gh pr merge --merge --delete-branch`, qui ferme aussi le ticket). Un lab = un ticket = une branche = une PR. Si un lab demande un changement d'outillage (scripts, containers, README, CLAUDE.md), il passe dans la branche, la PR et le ticket du lab : pas de PR séparée, sauf si l'utilisateur le demande.
 
 **Relancer un ancien lab** : donner seulement `./scripts/lab-run.sh NNN-theme` depuis `main`, démarrer le chrono, débriefer. Ne rien créer ni modifier dans le repo.
 
@@ -83,6 +83,34 @@ L'agent n'a pas toujours `git` ; l'utilisateur oui. Les branches sont **ta respo
 - `scripts/lab-run.sh NNN-theme` : construit l'image `containers/debian-server` une fois, lance un conteneur Podman rootless durci (systemd, sans réseau, sans volume de l'hôte), y injecte `setup.sh` avec `podman cp`, ouvre un shell, détruit tout à la sortie.
 - `scripts/open-lab.sh NNN-theme` : ticket, branche, commit vide, PR en brouillon (`Closes #N`). Demande à `gh` le droit **Issues** (lecture/écriture) en plus de Contents et Pull requests.
 - `scripts/publish-lab.sh NNN-theme` : commit de `labs/`, push, PR « prête ».
+
+## Retours d'expérience et vérifications obligatoires
+
+Environnement réel de l'utilisateur : Podman 4.9.3 rootless, cgroups v2 (gestionnaire systemd), runtime runc. **L'agent ne peut pas exécuter Podman, git ni gh** (pas de root, pas de `newuidmap`, pas de `/dev/fuse`) : le terminal de l'utilisateur est le seul banc d'essai. Il s'agace vite des allers-retours, des questions et des échecs répétés : être précis, court et fiable.
+
+### Avant chaque lab (checklist)
+
+1. **Vérifier l'état réel de git** dans `/tmux/` (branche courante, fichiers modifiés) avant de donner une commande.
+2. **Tester chaque option Podman nouvelle avant d'écrire le lab** : `podman <commande> --help`, ou une commande courte et jetable (`podman run --rm …`) lancée par l'utilisateur. Ne jamais bâtir un lab entier sur une option jamais vue fonctionner sur sa version.
+3. `bash -n` sur tous les scripts, relecture de `setup.sh` (périmètre, idempotence, pas de secret).
+4. **Après chaque commande de l'utilisateur, lire son terminal** (`/tmux/`) et l'erreur réelle avant de conclure ou de modifier quoi que ce soit.
+5. **Ne jamais recopier dans le presse-papier une commande déjà lancée** (ex. création de PR) : vérifier d'abord dans `/tmux/`.
+6. Si une technique échoue, **chercher une autre technique pour le même thème** : ne pas changer le thème choisi par l'utilisateur sans son accord.
+
+### Limites connues de Podman 4.9
+
+- `--tmpfs` refuse `nr_inodes` (« invalid mount option »). Contournement : un **volume tmpfs** (`podman volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=…`), les options étant lues dans `labs/NNN-theme/tmpfs.opts`. Validé (lab 002).
+- `podman volume create` n'accepte pas `-q`.
+- `gh pr view` échoue (erreur « Projects classic ») : donner l'URL de la PR à ouvrir dans le navigateur.
+- Pour un jeton `gh` fine-grained : droits Contents, Pull requests **et Issues** en lecture/écriture.
+
+### Règles de conduite apprises
+
+- Pas de VM, pas de clone, pas de volume de l'hôte : conteneur Podman rootless durci uniquement. Aucune confirmation inutile dans le conteneur.
+- Un ticket = une branche = **une seule PR**, outillage inclus (pas de PR séparée).
+- **Aucune ligne `Co-Authored-By`** dans les commits ni dans les scripts.
+- Ne jamais fusionner une PR à la place de l'utilisateur : lui donner la commande ou l'URL.
+- Une chose à la fois, peu de questions : décider soi-même quand c'est un détail technique.
 
 ## Environnement (spécifique au poste d'origine, à ignorer s'il n'existe pas)
 

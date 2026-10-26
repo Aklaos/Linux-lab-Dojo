@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 
 LAB="${1:?Usage : $0 NNN-theme}"
 
-git add labs
+git add -A
 git commit -m "Lab $LAB"
-git push -u origin "lab-$LAB"
+git push -u origin HEAD
 gh pr ready
