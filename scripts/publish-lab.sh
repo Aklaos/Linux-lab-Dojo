@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# Commit, push et PR en brouillon du lab en cours.
+# Fin d'un lab : commit, push et passage de la PR en « prête à fusionner ».
+# La fusion est faite par le mainteneur (elle ferme aussi le ticket).
+# Usage : ./scripts/publish-lab.sh 001-disque-plein
 set -euo pipefail
 cd "$(dirname "$0")/.."
-git add -A
-git commit -m "Lab $1"
-git push -u origin "lab-$1"
-gh pr create --draft --title "Lab $1" --body "Mini-lab Linux de 10 minutes."
+
+LAB="${1:?Usage : $0 NNN-theme}"
+
+git add labs
+git commit -m "Lab $LAB"
+git push -u origin "lab-$LAB"
+gh pr ready
