@@ -18,19 +18,18 @@ Une petite application enregistre ses données dans `/opt/lab-001/data`. Depuis 
 
 ## Prérequis
 
-- Une VM Linux jetable (Debian ou Ubuntu), accès SSH, `sudo`.
-- Les outils `mkfs.ext4`, `mount` et `fallocate` (présents par défaut).
+- Podman (rootless). Aucune VM, aucun clone : tout tourne dans un conteneur jetable et isolé (pas de volume de l'hôte, pas de réseau).
 
 ## Lancer le lab
 
+Depuis la racine du repo :
+
 ```
-sudo ./labs/001-disque-plein/setup.sh
+./scripts/lab-run.sh 001-disque-plein
 ```
 
-Le script demande une confirmation avant de dégrader la machine. Il ne crée qu'une petite image disque de 64 Mo dans `/opt/lab-001`. Ne lis pas `setup.sh`, `hints.md` ni `debrief.md` avant la fin.
+Le script construit l'environnement la première fois, demande une confirmation, puis t'ouvre un shell sur un serveur Debian. Ne lis pas `setup.sh`, `hints.md` ni `debrief.md` avant la fin.
 
 ## Remise à zéro
 
-```
-sudo ./labs/001-disque-plein/cleanup.sh
-```
+Tape `exit` : le conteneur est détruit. (`cleanup.sh` ne sert que si tu as lancé `setup.sh` à la main sur une VM jetable.)
