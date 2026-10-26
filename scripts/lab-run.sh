@@ -9,6 +9,8 @@ NUM="${LAB%%-*}"
 NAME="lab-${NUM}"
 IMAGE="localhost/linux-dojo/debian-server"
 SETUP="labs/${LAB}/setup.sh"
+# Options du disque du lab (fichier facultatif du lab), sinon 64 Mo.
+OPTS="$(cat "labs/${LAB}/tmpfs.opts" 2>/dev/null || echo "size=64m")"
 
 command -v podman >/dev/null || { echo "Il faut Podman."; exit 1; }
 [ -f "$SETUP" ] || { echo "Lab introuvable : $LAB"; exit 1; }
@@ -26,7 +28,7 @@ podman run -d --name "$NAME" --hostname srv-prod-01 \
   --cap-drop=MKNOD --cap-drop=NET_RAW --cap-drop=SETFCAP --cap-drop=AUDIT_WRITE \
   --security-opt no-new-privileges \
   --pids-limit 256 --memory 512m --memory-swap 512m --cpus 1 \
-  --tmpfs "/opt/lab-${NUM}/data:rw,size=64m,mode=755,nosuid,nodev,noexec" \
+  --tmpfs "/opt/lab-${NUM}/data:rw,${OPTS},mode=755,nosuid,nodev,noexec" \
   "$IMAGE" >/dev/null
 
 # Attendre le démarrage de systemd (l'état « degraded » est sans importance).
