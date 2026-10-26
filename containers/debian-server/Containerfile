@@ -1,0 +1,17 @@
+# Serveur Debian jetable pour les labs : systemd en PID 1, outils d'admin usuels.
+FROM docker.io/library/debian:trixie-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      systemd systemd-sysv dbus cron procps psmisc lsof iproute2 iputils-ping \
+      util-linux e2fsprogs less nano vim-tiny bash-completion ca-certificates \
+ && rm -rf /var/lib/apt/lists/* \
+ && systemctl mask getty.target console-getty.service \
+      systemd-udevd.service systemd-udev-trigger.service \
+      systemd-udevd-control.socket systemd-udevd-kernel.socket \
+      systemd-modules-load.service \
+ && echo "srv-prod-01" > /etc/hostname
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]
