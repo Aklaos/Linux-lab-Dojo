@@ -32,7 +32,7 @@ Si `README.md` n'existe pas ou ne décrit pas encore le projet, crée la structu
 
 ## Structure d'un lab
 
-Un dossier par lab : `labs/NNN-theme/` (NNN sur 3 chiffres, theme en minuscules avec des tirets).
+Un dossier par lab : `labs/NNN-nom/` (NNN sur 3 chiffres, nom en minuscules avec des tirets). **Le nom décrit le symptôme, jamais la cause ni le thème** (ex. `007-service-qui-redemarre`, pas `007-memoire-oom`), car l'utilisateur voit le nom du dossier, de la branche, du ticket et de la PR.
 
 | Fichier | Rôle | Visible par l'utilisateur pendant le lab ? |
 |---|---|---|
@@ -42,7 +42,7 @@ Un dossier par lab : `labs/NNN-theme/` (NNN sur 3 chiffres, theme en minuscules 
 | `hints.md` | Indices progressifs, du plus vague au plus précis | Seulement à sa demande, un par un |
 | `debrief.md` | Cause, parcours de diagnostic efficace, commandes utiles, variantes et pièges | Seulement au débrief |
 
-`README.md` contient en en-tête : `niveau: fondamentaux`, `duree: 10 min`, `themes: [...]`.
+`README.md` contient en en-tête : `niveau: fondamentaux`, `duree: 10 min`, `themes: à renseigner au débrief`. Le vrai thème (et la ligne de `labs/INDEX.md`) ne s'écrivent **qu'en fin de lab, après le débrief**, car ils révèlent la cause. Le scénario ne doit contenir aucun mot qui la trahisse.
 
 ## Règles de sécurité des scripts
 
@@ -57,13 +57,13 @@ Les scripts sont publics et lancés en `root` dans un conteneur jetable : ils do
 
 ## Cycle d'une session
 
-1. **Début.** Demander (une question) : un thème précis, une surprise, ou relancer un ancien lab ? Pour une surprise, choisir un thème fondamental absent de `labs/INDEX.md`. Exemples de thèmes fondamentaux : disque plein, inodes épuisés, fichier supprimé mais espace non libéré, mémoire et OOM killer, CPU à 100 % par un processus, port déjà utilisé, DNS qui ne résout pas, mauvaise route par défaut, droits et propriété de fichiers, service systemd qui ne démarre pas, tâche cron qui ne tourne pas, trop de fichiers ouverts, horloge décalée, permissions des clés SSH, processus zombie.
+1. **Début.** Demander (une question) : un thème précis, une surprise, ou relancer un ancien lab ? Pour une surprise, choisir un thème fondamental absent de `labs/INDEX.md` (un lab de l'index est un lab déjà joué), puis lui donner un nom neutre basé sur le symptôme. Exemples de thèmes fondamentaux : disque plein, inodes épuisés, fichier supprimé mais espace non libéré, mémoire et OOM killer, CPU à 100 % par un processus, port déjà utilisé, DNS qui ne résout pas, mauvaise route par défaut, droits et propriété de fichiers, service systemd qui ne démarre pas, tâche cron qui ne tourne pas, trop de fichiers ouverts, horloge décalée, permissions des clés SSH, processus zombie.
 2. **Ouverture.** Donner la commande `./scripts/open-lab.sh NNN-theme` : elle crée le **ticket** (issue GitHub), la branche `lab-NNN-theme` depuis `main` et la **PR en brouillon** liée au ticket (`Closes #N`). Vérifier l'état réel de git avant.
 3. **Génération.** Créer le dossier du lab et tous ses fichiers. Donner à l'utilisateur les **indications de départ** : un court scénario réaliste, sans la cause.
 4. **Lancement.** Donner la commande `./scripts/lab-run.sh NNN-theme` (en local, aucune VM, aucun clone, aucun volume de l'hôte). Elle ouvre un shell sur un serveur Debian jetable. Pas de commit nécessaire avant de jouer.
 5. **Chrono.** Dès qu'il confirme que le script est lancé et le lab prêt, démarrer le chrono de **10 minutes** : lancer en tâche de fond `sleep 600` (Bash avec `run_in_background`), qui te réveille à la fin. Annoncer l'heure de début. S'il demande le temps restant, le calculer. À la fin : **« Time's up »**, lui demander de poser le clavier.
 6. **Débrief.** Voir la posture. Il peut dépasser le temps s'il veut finir, mais le débrief commence quand il le décide.
-7. **Fin.** Il tape `exit` : le conteneur est détruit. Écrire `debrief.md` (générique, sans rien sur l'utilisateur), mettre à jour `labs/INDEX.md`. Donner `./scripts/publish-lab.sh NNN-theme` (commit de `labs/`, push, PR passée en « prête »), puis la fusion par lui (`gh pr merge --merge --delete-branch`, qui ferme aussi le ticket). Un lab = un ticket = une branche = une PR. Si un lab demande un changement d'outillage (scripts, containers, README, CLAUDE.md), il passe dans la branche, la PR et le ticket du lab : pas de PR séparée, sauf si l'utilisateur le demande.
+7. **Fin.** Il tape `exit` : le conteneur est détruit. Écrire `debrief.md` (générique, sans rien sur l'utilisateur), mettre à jour `labs/INDEX.md`. Donner `./scripts/publish-lab.sh NNN-theme` : il commite tout, pousse, passe la PR en « prête », la **fusionne** (ce qui ferme le ticket et supprime la branche) et revient sur `main` à jour. C'est l'utilisateur qui le lance. Un lab = un ticket = une branche = une PR. Si un lab demande un changement d'outillage (scripts, containers, README, CLAUDE.md), il passe dans la branche, la PR et le ticket du lab : pas de PR séparée, sauf si l'utilisateur le demande.
 
 **Relancer un ancien lab** : donner seulement `./scripts/lab-run.sh NNN-theme` depuis `main`, démarrer le chrono, débriefer. Ne rien créer ni modifier dans le repo.
 
@@ -82,7 +82,7 @@ L'agent n'a pas toujours `git` ; l'utilisateur oui. Les branches sont **ta respo
 
 - `scripts/lab-run.sh NNN-theme` : construit l'image `containers/debian-server` une fois, lance un conteneur Podman rootless durci (systemd, sans réseau, sans volume de l'hôte), y injecte `setup.sh` avec `podman cp`, ouvre un shell, détruit tout à la sortie.
 - `scripts/open-lab.sh NNN-theme` : ticket, branche, commit vide, PR en brouillon (`Closes #N`). Demande à `gh` le droit **Issues** (lecture/écriture) en plus de Contents et Pull requests.
-- `scripts/publish-lab.sh NNN-theme` : commit de `labs/`, push, PR « prête ».
+- `scripts/publish-lab.sh NNN-theme` : commit, push, PR « prête », fusion, retour sur `main` à jour.
 
 ## Retours d'expérience et vérifications obligatoires
 
@@ -109,7 +109,7 @@ Environnement réel de l'utilisateur : Podman 4.9.3 rootless, cgroups v2 (gestio
 - Pas de VM, pas de clone, pas de volume de l'hôte : conteneur Podman rootless durci uniquement. Aucune confirmation inutile dans le conteneur.
 - Un ticket = une branche = **une seule PR**, outillage inclus (pas de PR séparée).
 - **Aucune ligne `Co-Authored-By`** dans les commits ni dans les scripts.
-- Ne jamais fusionner une PR à la place de l'utilisateur : lui donner la commande ou l'URL.
+- Ne jamais lancer moi-même une fusion : c'est l'utilisateur qui lance `publish-lab.sh` (qui fusionne).
 - Une chose à la fois, peu de questions : décider soi-même quand c'est un détail technique.
 
 ## Environnement (spécifique au poste d'origine, à ignorer s'il n'existe pas)
