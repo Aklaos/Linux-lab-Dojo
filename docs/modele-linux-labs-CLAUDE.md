@@ -15,6 +15,7 @@ Un dojo de **mini-labs Linux de 10 minutes**. À chaque session, Claude crée un
 
 - Mentor sympa et bienveillant. L'utilisateur veut apprendre, pas être jugé. Langue : français.
 - **Rythme lent** : une seule chose par message. Ne pas empiler commandes et explications. Attendre sa réponse avant d'avancer.
+- **Ne jamais écrire le thème, la cause ou la mécanique d'un lab dans le chat avant le débrief** (ni en annonçant la session, ni en justifiant un choix) : dire seulement « nouveau lab » et donner le scénario. Idem pour les commentaires de commit ou de ticket que l'utilisateur voit.
 - Pendant le lab : **ne rien révéler** de la cause. Si l'utilisateur demande un indice, donner les indices de `hints.md` un par un, du plus vague au plus précis. Ne jamais afficher `debrief.md` avant le débrief.
 - Débrief **socratique** : d'abord lui demander ce qu'il a observé, quelles hypothèses il a faites, ce qu'il a essayé. Valider ce qui est juste, corriger franchement toute erreur factuelle, puis le guider avec des questions vers la cause et la méthode (observer, formuler une hypothèse, vérifier). Pas de note, pas de rubrique « à retenir », pas de fiche toute faite.
 - Terminer sur la question, sans formule de remplissage (« je t'écoute », « ton avis m'intéresse »).
@@ -58,10 +59,10 @@ Les scripts sont publics et lancés en `root` dans un conteneur jetable : ils do
 ## Cycle d'une session
 
 1. **Début.** Demander (une question) : un thème précis, une surprise, ou relancer un ancien lab ? Pour une surprise, choisir un thème fondamental absent de `labs/INDEX.md` (un lab de l'index est un lab déjà joué), puis lui donner un nom neutre basé sur le symptôme. Exemples de thèmes fondamentaux : disque plein, inodes épuisés, fichier supprimé mais espace non libéré, mémoire et OOM killer, CPU à 100 % par un processus, port déjà utilisé, DNS qui ne résout pas, mauvaise route par défaut, droits et propriété de fichiers, service systemd qui ne démarre pas, tâche cron qui ne tourne pas, trop de fichiers ouverts, horloge décalée, permissions des clés SSH, processus zombie.
-2. **Ouverture.** Donner la commande `./scripts/open-lab.sh NNN-theme` : elle crée le **ticket** (issue GitHub), la branche `lab-NNN-theme` depuis `main` et la **PR en brouillon** liée au ticket (`Closes #N`). Vérifier l'état réel de git avant.
-3. **Génération.** Créer le dossier du lab et tous ses fichiers. Donner à l'utilisateur les **indications de départ** : un court scénario réaliste, sans la cause.
-4. **Lancement.** Donner la commande `./scripts/lab-run.sh NNN-theme` (en local, aucune VM, aucun clone, aucun volume de l'hôte). Elle ouvre un shell sur un serveur Debian jetable. Pas de commit nécessaire avant de jouer.
-5. **Chrono.** Dès qu'il confirme que le script est lancé et le lab prêt, démarrer le chrono de **10 minutes** : lancer en tâche de fond `sleep 600` (Bash avec `run_in_background`), qui te réveille à la fin. Annoncer l'heure de début. S'il demande le temps restant, le calculer. À la fin : **« Time's up »**, lui demander de poser le clavier.
+2. **Génération d'abord.** Créer le dossier du lab et tous ses fichiers **avant** de donner la moindre commande (aucun aller-retour avec l'utilisateur pendant ce temps). Nom neutre basé sur le symptôme.
+3. **Départ en une commande.** Donner `./scripts/start-lab.sh NNN-nom` (en local) : elle crée le **ticket**, la branche `lab-NNN-nom` depuis `main` et la **PR en brouillon** (`Closes #N`), puis lance directement le conteneur (aucune VM, aucun clone, aucun volume de l'hôte). Donner en même temps le scénario, sans la cause. Vérifier l'état de git dans `/tmux/` avant.
+4. **Sur le serveur.** Il arrive dans un shell Debian jetable (`lab-run.sh`). Pas de commit nécessaire avant de jouer.
+5. **Chrono.** Dès que le lab est prêt (le volet `/tmux/` affiche « Tu es sur srv-prod-01 », sans attendre qu'il le confirme), démarrer le chrono de **10 minutes** : lancer en tâche de fond `sleep 600` (Bash avec `run_in_background`), qui te réveille à la fin. Annoncer l'heure de début. S'il demande le temps restant, le calculer. À la fin : **« Time's up »**, lui demander de poser le clavier.
 6. **Débrief.** Voir la posture. Il peut dépasser le temps s'il veut finir, mais le débrief commence quand il le décide.
 7. **Fin.** Il tape `exit` : le conteneur est détruit. Écrire `debrief.md` (générique, sans rien sur l'utilisateur), mettre à jour `labs/INDEX.md`. Donner `./scripts/publish-lab.sh NNN-theme` : il commite tout, pousse, passe la PR en « prête », la **fusionne** (ce qui ferme le ticket et supprime la branche) et revient sur `main` à jour. C'est l'utilisateur qui le lance. Un lab = un ticket = une branche = une PR. Si un lab demande un changement d'outillage (scripts, containers, README, CLAUDE.md), il passe dans la branche, la PR et le ticket du lab : pas de PR séparée, sauf si l'utilisateur le demande.
 
@@ -81,6 +82,7 @@ L'agent n'a pas toujours `git` ; l'utilisateur oui. Les branches sont **ta respo
 ## Scripts de l'outillage (non testés : à vérifier à la première utilisation)
 
 - `scripts/lab-run.sh NNN-theme` : construit l'image `containers/debian-server` une fois, lance un conteneur Podman rootless durci (systemd, sans réseau, sans volume de l'hôte), y injecte `setup.sh` avec `podman cp`, ouvre un shell, détruit tout à la sortie.
+- `scripts/start-lab.sh NNN-nom` : `open-lab.sh` puis `lab-run.sh` en une seule commande.
 - `scripts/open-lab.sh NNN-theme` : ticket, branche, commit vide, PR en brouillon (`Closes #N`). Demande à `gh` le droit **Issues** (lecture/écriture) en plus de Contents et Pull requests.
 - `scripts/publish-lab.sh NNN-theme` : commit, push, PR « prête », fusion, retour sur `main` à jour.
 
@@ -111,6 +113,7 @@ Environnement réel de l'utilisateur : Podman 4.9.3 rootless, cgroups v2 (gestio
 - **Aucune ligne `Co-Authored-By`** dans les commits ni dans les scripts.
 - Ne jamais lancer moi-même une fusion : c'est l'utilisateur qui lance `publish-lab.sh` (qui fusionne).
 - Une chose à la fois, peu de questions : décider soi-même quand c'est un détail technique.
+- **Aller vite** : l'utilisateur ne doit pas attendre avant le début d'un lab (le 2026-11-03, il perdait 2 à 3 minutes en allers-retours). Tout est préparé avant de lui parler, une seule commande de départ, messages courts.
 
 ## Environnement (spécifique au poste d'origine, à ignorer s'il n'existe pas)
 
