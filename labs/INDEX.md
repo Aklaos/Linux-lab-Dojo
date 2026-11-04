@@ -10,3 +10,4 @@
 | 006 | Port déjà utilisé | fondamentaux | 10 min | ss -ltnp, lsof, ps, journalctl, relier un port à un processus, kill |
 | 007 | Mémoire et OOM killer | fondamentaux | 10 min | systemctl status, journalctl, limite mémoire (cgroup v2), OOM killer, dimensionner un service |
 | 008 | Trop de fichiers ouverts | fondamentaux | 10 min | journalctl, /proc/PID/fd et /proc/PID/limits, LimitNOFILE, surcharge systemd |
+| 009 | Service qui échoue au démarrage | fondamentaux | 10 min | systemctl status, journalctl, TasksMax et pids.max (cgroup), surcharge d'unité |
