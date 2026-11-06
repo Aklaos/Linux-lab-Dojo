@@ -12,3 +12,4 @@
 | 008 | Trop de fichiers ouverts | fondamentaux | 10 min | journalctl, /proc/PID/fd et /proc/PID/limits, LimitNOFILE, surcharge systemd |
 | 009 | Service qui échoue au démarrage | fondamentaux | 10 min | systemctl status, journalctl, TasksMax et pids.max (cgroup), surcharge d'unité |
 | 010 | Service lent sur un serveur calme | fondamentaux | 10 min | systemctl cat, CPUQuota, cpu.max et cpu.stat (cgroup), throttling CPU |
+| 011 | Application bloquée après un déploiement | fondamentaux | 10 min | systemctl list-dependencies, Requires/After, journalctl par service, valider une configuration |
