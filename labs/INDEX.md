@@ -14,3 +14,4 @@
 | 010 | Service lent sur un serveur calme | fondamentaux | 10 min | systemctl cat, CPUQuota, cpu.max et cpu.stat (cgroup), throttling CPU |
 | 011 | Application bloquée après un déploiement | fondamentaux | 10 min | systemctl list-dependencies, Requires/After, journalctl par service, valider une configuration |
 | 012 | Service qui marche à la main | fondamentaux | 10 min | contexte d'un service systemd (WorkingDirectory, Environment), comparer shell et service, journalctl |
+| 013 | Sauvegarde qui ne se lance jamais | fondamentaux | 10 min | timers systemd, list-timers, enable vs start, Unit=, comparaison avec cron |
