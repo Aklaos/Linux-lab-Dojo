@@ -15,3 +15,4 @@
 | 011 | Application bloquée après un déploiement | fondamentaux | 10 min | systemctl list-dependencies, Requires/After, journalctl par service, valider une configuration |
 | 012 | Service qui marche à la main | fondamentaux | 10 min | contexte d'un service systemd (WorkingDirectory, Environment), comparer shell et service, journalctl |
 | 013 | Sauvegarde qui ne se lance jamais | fondamentaux | 10 min | timers systemd, list-timers, enable vs start, Unit=, comparaison avec cron |
+| 014 | Mise en production sans démarrage | fondamentaux | 10 min | liens symboliques cassés, code 203/EXEC, namei, readlink, droits d'exécution |
